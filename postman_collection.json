@@ -1,0 +1,470 @@
+{
+  "info": {
+    "_postman_id": "real-estate-api",
+    "name": "Real Estate API",
+    "schema": "https://schema.getpostman.com/json/schema/v2.0.0/collections.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"user\",\n  \"phone\": \"+1234567890\",\n  \"address\": \"123 Main St\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated\",\n  \"email\": \"john.updated@example.com\",\n  \"phone\": \"+1987654321\",\n  \"address\": \"456 New St\",\n  \"profileImage\": \"https://example.com/image.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Liked Properties",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/liked-properties",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me", "liked-properties"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Properties",
+      "item": [
+        {
+          "name": "Get All Properties",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Properties with Filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties?city=New York&type=apartment&minPrice=100000&maxPrice=500000&bedrooms=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties"],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "New York"
+                },
+                {
+                  "key": "type",
+                  "value": "apartment"
+                },
+                {
+                  "key": "minPrice",
+                  "value": "100000"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "500000"
+                },
+                {
+                  "key": "bedrooms",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Property by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/{{propertyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "{{propertyId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Property Likes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/{{propertyId}}/likes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "{{propertyId}}", "likes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Liked Properties",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/liked",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "liked"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Property",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Beautiful Apartment\",\n  \"description\": \"A beautiful apartment in the city center\",\n  \"price\": 250000,\n  \"city\": \"New York\",\n  \"area\": 1200,\n  \"bedrooms\": 3,\n  \"furnished\": true,\n  \"type\": \"apartment\",\n  \"images\": [\"https://example.com/image1.jpg\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/properties",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Like/Unlike Property",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/{{propertyId}}/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "{{propertyId}}", "like"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Admin Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "dashboard"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Properties (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/properties",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "properties"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Properties with Pagination and Filters (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/properties?page=1&limit=10&search=apartment&status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "properties"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "apartment"
+                },
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Users with Pagination and Filters (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users?page=1&limit=10&search=john&role=user",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "john"
+                },
+                {
+                  "key": "role",
+                  "value": "user"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Property",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/properties/{{propertyId}}/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "properties", "{{propertyId}}", "approve"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Property",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/properties/{{propertyId}}/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "properties", "{{propertyId}}", "reject"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "id": "baseUrl",
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    }
+  ]
+}
