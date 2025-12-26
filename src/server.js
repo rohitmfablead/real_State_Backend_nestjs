@@ -3,9 +3,23 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const multer = require('multer');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/') 
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)) 
+  }
+});
+
+const upload = multer({ storage: storage });
 
 // Middleware
 app.use(cors({
@@ -16,6 +30,16 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 app.use(express.json());
+
+// Create uploads directory if it doesn't exist
+const fs = require('fs');
+const uploadDir = 'uploads/';
+if (!fs.existsSync(uploadDir)){
+  fs.mkdirSync(uploadDir);
+}
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
 
 // API Routes prefix
 const apiRouter = express.Router();
@@ -49,13 +73,26 @@ const propertySchema = new mongoose.Schema({
   title: String,
   description: String,
   price: Number,
-  city: String,
-  area: Number,
+  type: String, // sale or rent
+  propertyType: String, // apartment, house, etc.
   bedrooms: Number,
+  bathrooms: Number,
+  area: Number,
   furnished: Boolean,
-  type: String,
+  location: {
+    city: String,
+    area: String,
+    address: String,
+    coordinates: {
+      lat: Number,
+      lng: Number
+    }
+  },
   images: [String],
-  approved: { type: Boolean, default: false },
+  amenities: [String],
+  approved: { type: Boolean, default: true },
+  status: String,
+  featured: { type: Boolean, default: false },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 }, { timestamps: true });
@@ -73,6 +110,24 @@ const verifyToken = (req, res, next) => {
     next();
   } catch (error) {
     res.status(401).json({ message: 'Invalid token' });
+  }
+};
+
+// Middleware to optionally verify JWT (doesn't fail if no token)
+const verifyTokenOptional = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    req.user = null; // No user authenticated
+    return next();
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    req.user = null; // Invalid token, treat as unauthenticated
+    next();
   }
 };
 
@@ -182,7 +237,7 @@ apiRouter.put('/users/me', verifyToken, async (req, res) => {
 });
 
 // Property Routes
-apiRouter.get('/properties', async (req, res) => {
+apiRouter.get('/properties', verifyTokenOptional, async (req, res) => {
   try {
     // Get query parameters for filtering
     const { city, type, minPrice, maxPrice, bedrooms } = req.query;
@@ -197,36 +252,227 @@ apiRouter.get('/properties', async (req, res) => {
     
     const properties = await Property.find(query)
       .populate('owner', 'name email')
+      .populate('likedBy') // Populate likedBy to check if user has liked the property
       .sort({ createdAt: -1 });
+    
+    // Update image URLs to full URLs and add like status if user is authenticated
+    const serverUrl = `${req.protocol}://${req.get('host')}`;
+    const updatedProperties = properties.map(property => {
+      // Update image URLs
+      if (property.images && Array.isArray(property.images)) {
+        property.images = property.images.map(image => 
+          image.startsWith('http') ? image : `${serverUrl}${image}`
+        );
+      }
       
-    res.json(properties);
+      // Add like status if user is authenticated
+      if (req.user) {
+        property.isLiked = property.likedBy && property.likedBy.some(user => user._id.toString() === req.user.id);
+      } else {
+        property.isLiked = false;
+      }
+      
+      // Remove the likedBy array from the response to avoid exposing user details
+      delete property.likedBy;
+      
+      return property;
+    });
+    
+    res.json(updatedProperties);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-apiRouter.get('/properties/:id', async (req, res) => {
+// Get all properties (for testing - includes unapproved)
+apiRouter.get('/properties/all', verifyTokenOptional, async (req, res) => {
   try {
-    const property = await Property.findById(req.params.id).populate('owner', 'name email');
+    // Get query parameters for filtering
+    const { city, type, minPrice, maxPrice, bedrooms } = req.query;
+    
+    let query = {};
+    
+    if (city) query.city = new RegExp(city, 'i');
+    if (type) query.type = new RegExp(type, 'i');
+    if (minPrice) query.price = { ...query.price, $gte: Number(minPrice) };
+    if (maxPrice) query.price = { ...query.price, $lte: Number(maxPrice) };
+    if (bedrooms) query.bedrooms = Number(bedrooms);
+    
+    const properties = await Property.find(query)
+      .populate('owner', 'name email')
+      .populate('likedBy') // Populate likedBy to check if user has liked the property
+      .sort({ createdAt: -1 });
+      
+    // Update image URLs to full URLs and add like status if user is authenticated
+    const serverUrl = `${req.protocol}://${req.get('host')}`;
+    const updatedProperties = properties.map(property => {
+      // Update image URLs
+      if (property.images && Array.isArray(property.images)) {
+        property.images = property.images.map(image => 
+          image.startsWith('http') ? image : `${serverUrl}${image}`
+        );
+      }
+      
+      // Add like status if user is authenticated
+      if (req.user) {
+        property.isLiked = property.likedBy && property.likedBy.some(user => user._id.toString() === req.user.id);
+      } else {
+        property.isLiked = false;
+      }
+      
+      // Remove the likedBy array from the response to avoid exposing user details
+      delete property.likedBy;
+      
+      return property;
+    });
+    
+    res.json(updatedProperties);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get all liked properties (new API to address the issue)
+apiRouter.get('/properties/liked', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate({
+      path: 'likedProperties',
+      populate: {
+        path: 'owner',
+        select: 'name email'
+      }
+    });
+    
+    // Update image URLs to full URLs and add like status
+    const serverUrl = `${req.protocol}://${req.get('host')}`;
+    const updatedLikedProperties = user.likedProperties.map(property => {
+      // Update image URLs
+      if (property.images && Array.isArray(property.images)) {
+        property.images = property.images.map(image => 
+          image.startsWith('http') ? image : `${serverUrl}${image}`
+        );
+      }
+      
+      // All properties in this list are liked by the user
+      property.isLiked = true;
+      
+      // Remove the likedBy array from the response to avoid exposing user details
+      delete property.likedBy;
+      
+      return property;
+    });
+    
+    res.json(updatedLikedProperties);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+apiRouter.get('/properties/:id', verifyTokenOptional, async (req, res) => {
+  try {
+    const property = await Property.findById(req.params.id)
+      .populate('owner', 'name email')
+      .populate('likedBy'); // Populate likedBy to check if user has liked the property
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
     }
+    
+    // Update image URLs to full URLs
+    const serverUrl = `${req.protocol}://${req.get('host')}`;
+    if (property.images && Array.isArray(property.images)) {
+      property.images = property.images.map(image => 
+        image.startsWith('http') ? image : `${serverUrl}${image}`
+      );
+    }
+    
+    // Add like status if user is authenticated
+    if (req.user) {
+      property.isLiked = property.likedBy && property.likedBy.some(user => user._id.toString() === req.user.id);
+    } else {
+      property.isLiked = false;
+    }
+    
+    // Remove the likedBy array from the response to avoid exposing user details
+    delete property.likedBy;
+    
     res.json(property);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-apiRouter.post('/properties', verifyToken, async (req, res) => {
+// Property creation with multiple image upload
+apiRouter.post('/properties', verifyToken, upload.array('images', 10), async (req, res) => {
   try {
+    // Extract property data from form data
+    const { 
+      title, 
+      description, 
+      price, 
+      type, 
+      propertyType,
+      bedrooms, 
+      bathrooms,
+      area, 
+      furnished, 
+      location,
+      amenities,
+      status
+    } = req.body;
+    
+    // Parse location if it's a string
+    let parsedLocation = {};
+    if (typeof location === 'string') {
+      try {
+        parsedLocation = JSON.parse(location);
+      } catch (e) {
+        parsedLocation = { city: location };
+      }
+    } else {
+      parsedLocation = location || {};
+    }
+    
+    // Parse amenities if it's a string
+    let parsedAmenities = [];
+    if (typeof amenities === 'string') {
+      try {
+        parsedAmenities = JSON.parse(amenities);
+      } catch (e) {
+        parsedAmenities = amenities.split(',').map(item => item.trim());
+      }
+    } else {
+      parsedAmenities = amenities || [];
+    }
+    
+    // Process uploaded images
+    let imageUrls = [];
+    if (req.files) {
+      // Get the server URL from the request
+      const serverUrl = `${req.protocol}://${req.get('host')}`;
+      imageUrls = req.files.map(file => `${serverUrl}/uploads/${file.filename}`);
+    }
+    
     const property = new Property({
-      ...req.body,
+      title,
+      description,
+      price: Number(price),
+      type,
+      propertyType,
+      bedrooms: Number(bedrooms),
+      bathrooms: Number(bathrooms),
+      area: Number(area),
+      furnished: furnished === 'true',
+      location: parsedLocation,
+      images: imageUrls, // Store the image paths
+      amenities: parsedAmenities,
+      status: status || 'pending',
       owner: req.user.id
     });
     
     await property.save();
     res.status(201).json(property);
   } catch (error) {
+    console.error('Error creating property:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -277,7 +523,27 @@ apiRouter.post('/properties/:id/like', verifyToken, async (req, res) => {
 apiRouter.get('/users/me/liked-properties', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate('likedProperties');
-    res.json(user.likedProperties);
+    
+    // Update image URLs to full URLs and add like status
+    const serverUrl = `${req.protocol}://${req.get('host')}`;
+    const updatedLikedProperties = user.likedProperties.map(property => {
+      // Update image URLs
+      if (property.images && Array.isArray(property.images)) {
+        property.images = property.images.map(image => 
+          image.startsWith('http') ? image : `${serverUrl}${image}`
+        );
+      }
+      
+      // All properties in this list are liked by the user
+      property.isLiked = true;
+      
+      // Remove the likedBy array from the response to avoid exposing user details
+      delete property.likedBy;
+      
+      return property;
+    });
+    
+    res.json(updatedLikedProperties);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -295,23 +561,6 @@ apiRouter.get('/properties/:id/likes', async (req, res) => {
       count: property.likedBy.length,
       users: property.likedBy
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Get all liked properties (new API to address the issue)
-apiRouter.get('/properties/liked', verifyToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).populate({
-      path: 'likedProperties',
-      populate: {
-        path: 'owner',
-        select: 'name email'
-      }
-    });
-    
-    res.json(user.likedProperties);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

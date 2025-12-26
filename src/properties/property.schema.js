@@ -10,6 +10,17 @@ const PropertySchema = new mongoose.Schema({
   furnished: Boolean,
   type: String,
   images: [String],
+  location: {
+    city: String,
+    address: String,
+    latitude: Number,
+    longitude: Number
+  },
+  likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  isLiked: { type: Boolean, default: false },
+  status: String,
+  propertyType: String,
+  
   approved: { type: Boolean, default: false },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });

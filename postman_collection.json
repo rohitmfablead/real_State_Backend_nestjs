@@ -229,15 +229,82 @@
                 "key": "Authorization",
                 "value": "Bearer {{token}}",
                 "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Beautiful Apartment\",\n  \"description\": \"A beautiful apartment in the city center\",\n  \"price\": 250000,\n  \"city\": \"New York\",\n  \"area\": 1200,\n  \"bedrooms\": 3,\n  \"furnished\": true,\n  \"type\": \"apartment\",\n  \"images\": [\"https://example.com/image1.jpg\"]\n}"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Modern Downtown Apartment",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Stunning modern apartment in the heart of downtown with panoramic city views. Features high ceilings, floor-to-ceiling windows, and premium finishes throughout.",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "450000",
+                  "type": "text"
+                },
+                {
+                  "key": "type",
+                  "value": "sale",
+                  "type": "text"
+                },
+                {
+                  "key": "propertyType",
+                  "value": "apartment",
+                  "type": "text"
+                },
+                {
+                  "key": "bedrooms",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "bathrooms",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "area",
+                  "value": "1200",
+                  "type": "text"
+                },
+                {
+                  "key": "furnished",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "location",
+                  "value": "{\"city\":\"New York\",\"area\":\"Manhattan\",\"address\":\"123 Park Avenue\",\"coordinates\":{\"lat\":40.7589,\"lng\":-73.9851}}",
+                  "type": "text"
+                },
+                {
+                  "key": "amenities",
+                  "value": "[\"Gym\",\"Pool\",\"Parking\",\"Security\",\"24/7 Concierge\",\"Rooftop Terrace\"]",
+                  "type": "text"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "type": "text"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": []
+                }
+              ]
             },
             "url": {
               "raw": "{{baseUrl}}/api/properties",
